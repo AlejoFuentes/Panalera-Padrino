@@ -1,0 +1,87 @@
+.footer {
+    background-color: #111111;
+    color: #cccccc; 
+    font-size: 14px;
+}
+
+.footer-title {
+    color: #ffffff; 
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 16px;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.footer-subtitle {
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.footer-info-list, 
+.footer-links-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-info-list li,
+.footer-links-list li {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start; 
+    gap: 10px;
+}
+
+.footer-info-list i {
+    position: relative;
+    bottom: 3px;
+}
+
+.footer-icon-cyan {
+    color: var(--color-primario); 
+    font-size: 16px;
+    margin-top: 2px; 
+}
+
+.footer-links-list a {
+    color: #cccccc;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-links-list a:hover {
+    color: var(--color-primario); 
+}
+
+.footer-social-logos a {
+    text-decoration: none;
+}
+
+.social-icon {
+    font-size: 28px;
+    color: #ffffff; 
+    transition: all 0.2s ease;
+}
+
+.social-icon:hover {
+    color: var(--color-primario); 
+    transform: translateY(-3px); 
+}
+
+.footer-payment-logos,
+.footer-shipping-logos {
+    color: #aaaaaa; 
+    font-size: 13px;
+}
+
+.footer-bottom {
+    background-color: #080808; 
+    border-top: 1px solid #222222; 
+}
+
+.copyright-text {
+    font-size: 13px;
+    color: #777777; 
+}
