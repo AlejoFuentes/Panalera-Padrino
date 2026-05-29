@@ -1,0 +1,36 @@
+# =========================
+# Dependencias
+# =========================
+# Pesan una locura y se pueden regenerar con 'npm install'. Aplica para back y front.
+node_modules/
+
+# =========================
+# Variables de Entorno y Secretos
+# =========================
+# ¡FUNDAMENTAL! Acá están tus contraseñas de la base de datos. Si subís esto, te pueden hackear Supabase.
+.env
+.env.local
+.env.development
+.env.production
+
+# =========================
+# Archivos de Producción (React)
+# =========================
+# Son las carpetas que se generan solas cuando compiles el frontend para subir el sistema a la nube.
+build/
+dist/
+out/
+
+# =========================
+# Logs de Errores
+# =========================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Archivos Basura del Sistema Operativo
+# =========================
+# Windows y Mac generan estos archivitos invisibles que no le sirven a nadie más.
+.DS_Store
+Thumbs.db
