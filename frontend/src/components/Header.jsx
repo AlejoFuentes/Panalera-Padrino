@@ -1,8 +1,12 @@
 import './Header.css';
+import { useNavigate } from "react-router";
 
 const Header = () => {
+
+  const navigate = useNavigate();
+
     return (
-        <div className="Header-Pañalera row justify-content-between">
+        <div className="Header-Pañalera row justify-content-between m-0">
             <div className='col-2 imagen-logoPañalera'>
                 <img src='/images/logo-pañalera.png' className='h-100 w-100'></img>
             </div>
@@ -15,13 +19,13 @@ const Header = () => {
                       <div className="collapse navbar-collapse" id="navbarText">
                         <ul className="navbar-nav mx-auto mb-2 mb-lg-0 gap-5">
                           <li className="nav-item">
-                            <a className="nav-link text-light" href="#">Productos</a>
+                            <button className="nav-link text-light" onClick={() => navigate('/')}>Productos</button>
                           </li>
                           <li className="nav-item">
-                            <a className="nav-link text-light" href="#">Categorías</a>
+                            <button className="nav-link text-light" onClick={() => navigate('/categorías/todas')}>Categorías</button>
                           </li>
                           <li className="nav-item">
-                            <a className="nav-link text-light" href="#">Sobre nosotros</a>
+                            <button className="nav-link text-light" onClick={() => navigate('/sobre-nosotros')}>Sobre nosotros</button>
                           </li>
                           <li className="nav-item">
                             <a className="nav-link text-light" href="#contacto">Contacto</a>
