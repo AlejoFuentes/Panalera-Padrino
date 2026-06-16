@@ -39,7 +39,6 @@ const Footer = () => {
               <div className="footer-social-logos d-flex gap-4">
                 <a href="https://www.facebook.com/alejo.fuentes.1829/" target='_blank' title="Facebook"><i className="bi bi-facebook social-icon"></i></a>
                 <a href="https://www.instagram.com/alejo.fuentess_/" target='_blank' title="Instagram"><i className="bi bi-instagram social-icon"></i></a>
-                <a href="https://www.linkedin.com/in/alejo-fuentes-263066333/" target='_blank' title="LinkedIn"><i className="bi bi-linkedin social-icon"></i></a>
               </div>
             </div>
 
@@ -61,7 +60,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="footer-bottom py-3">
           <div className="container text-center">
-            <p className="m-0 copyright-text">Todos los derechos reservados 2026 - Pañalera, Berazategui, Buenos Aires.</p> {/* © */}
+            <p className="m-0 copyright-text">Todos los derechos reservados 2026 - Dis. Tulin, Berazategui, Buenos Aires.</p> {/* © */}
           </div>
         </div>
 

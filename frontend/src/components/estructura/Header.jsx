@@ -1,14 +1,15 @@
 import './Header.css';
-import { useNavigate } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 
 const Header = () => {
 
   const navigate = useNavigate();
 
     return (
+      <>
         <div className="Header-Pañalera row justify-content-between m-0">
             <div className='col-2 imagen-logoPañalera'>
-                <img src='/images/logo-pañalera.png' className='h-100 w-100'></img>
+                <img src='/images/logo-distulin.png' className='h-100 w-100'></img>
             </div>
             <div className='col-7 d-flex align-items-center'>
                 <nav className="navbar navbar-expand-lg" id="inicio">
@@ -35,7 +36,8 @@ const Header = () => {
                     </div>
                 </nav>
             </div>
-        </div>
+          </div>
+        </>
     )
 }
 

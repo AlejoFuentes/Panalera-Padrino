@@ -1,24 +1,34 @@
-import Header from './components/Header.jsx';
-import Footer from './components/Footer.jsx';
-import Pañalera from './components/Pañalera.jsx';
-import Categoria from './components/Categoria.jsx';
-import SobreNosotros from './components/SobreNosotros.jsx';
-import { Routes, Route, Navigate } from 'react-router';
+// Agregamos useLocation al import
+import { Routes, Route, Navigate, useLocation } from 'react-router';
+import Header from './components/estructura/Header.jsx';
+import Footer from './components/estructura/Footer.jsx';
+import Pañalera from './components/contenido/Pañalera.jsx';
+import Categoria from './components/contenido/Categoria.jsx';
+import SobreNosotros from './components/contenido/SobreNosotros.jsx';
+import Login from './components/panel/login.jsx';
+import AbmProductos from './components/panel/AbmProductos.jsx';
 
 const App = () => {
 
+  const location = useLocation();
+  const esAdmin = location.pathname.startsWith('/admin');
+
   return (
     <>
-      <Header/>
+      {!esAdmin && <Header />}
+      
       <Routes>
         <Route path='/' element={<Pañalera/>} />
         <Route path='/categorías/todas' element={<Categoria/>} />
         <Route path='/sobre-nosotros' element={<SobreNosotros/>} />
+        <Route path='/admin' element={<Login/>} />
+        <Route path='/admin/productos' element={<AbmProductos/>} />
+
         <Route path='*' element={<Navigate to="/" replace />} />
       </Routes>
-      <Footer/>
+      {!esAdmin && <Footer />}
     </>
   )
-
 }
+
 export default App;

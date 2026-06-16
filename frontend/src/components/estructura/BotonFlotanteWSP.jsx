@@ -4,7 +4,7 @@ const BotonFlotanteWSP = () => {
             
             {/* <-- BOTÓN FLOTANTE DE WHATSAPP --> */}
                 <a 
-                  href="https://wa.me/5491126177502?text=Hola!%20Tengo%20una%20consulta%20sobre%20un%20producto" 
+                  href="https://wa.me/5491152484930?text=Hola!%20Tengo%20una%20consulta%20sobre%20un%20producto" 
                   className="btn-wsp" 
                   target="_blank" 
                   rel="noopener noreferrer"

@@ -1,5 +1,5 @@
 import './Pañalera.css';
-import BotonFlotanteWSP from './BotonFlotanteWSP.jsx';
+import BotonFlotanteWSP from '../estructura/BotonFlotanteWSP.jsx';
 
 const Pañalera = () => {
     return (

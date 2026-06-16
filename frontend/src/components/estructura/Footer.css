@@ -1,11 +1,11 @@
 .footer {
-    background-color: #111111;
+    background-color: #0c136ef3;
     color: #cccccc; 
     font-size: 14px;
 }
 
 .footer-title {
-    color: #ffffff; 
+    color: #CCCCCC; 
     font-weight: 700;
     text-transform: uppercase;
     font-size: 16px;
@@ -14,7 +14,7 @@
 }
 
 .footer-subtitle {
-    color: #ffffff;
+    color: #CCCCCC;
     font-weight: 600;
     margin-bottom: 5px;
 }
@@ -61,7 +61,7 @@
 
 .social-icon {
     font-size: 28px;
-    color: #ffffff; 
+    color: #CCCCCCce; 
     transition: all 0.2s ease;
 }
 
@@ -77,11 +77,11 @@
 }
 
 .footer-bottom {
-    background-color: #080808; 
-    border-top: 1px solid #222222; 
+    background-color: #0c136ee5; 
+    border-top: 1px solid #0012614b; 
 }
 
 .copyright-text {
     font-size: 13px;
-    color: #777777; 
+    color: #ccccccce; 
 }
