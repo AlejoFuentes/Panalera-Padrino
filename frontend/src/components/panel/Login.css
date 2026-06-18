@@ -1,9 +1,149 @@
 .container-admin {
-    background-color: rgba(165, 165, 165, 0.37);
+    background-color: rgba(165, 165, 165, 0.37) !important;
     height: 100%;
 }
 
+:root {
+  --color-fondo: rgba(165, 165, 165, 0.37);
+}
+
+#root {
+  height: 100%;
+  background-color: var(--color-fondo);
+}
+
 html {
-    background-color: rgba(165, 165, 165, 0.37);
+    background-color: rgba(165, 165, 165, 0.37) !important;
     height: 100%;
+}
+
+.contenedor-login {
+    height: 80%;
+    width: 80%;
+    background-color: white;
+    display: flex;
+    flex-direction: row;
+    border-radius: 30px;
+    gap: 10px;
+}
+
+.logo-tulin-login {
+    height: 35%;
+    width: 55%;
+}
+
+.boton-accion {
+  background-color: rgb(48, 78, 212) !important;
+  height: 40px;
+  width: auto !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.btn.boton-accion:hover  {
+  background-color: rgba(48, 78, 212, 0.822) !important;
+}
+
+.btn.boton-accion:active {
+  background-color: rgb(48, 78, 212) !important;
+}
+
+
+.contenedor-input {
+    display: flex;
+    align-items: center;
+    border-bottom: 2px solid #CCCCCC;
+}
+
+.input-formulario {
+    width: 100%;
+    height: 50px;
+    border: none;
+}
+
+.input-formulario:focus {
+    outline: none !important;
+}
+
+.boton-recuperacion {
+    color: rgb(39, 31, 158) !important;
+    margin-top: 7px;
+}
+.boton-recuperacion:active, 
+.boton-recuperacion:focus {
+    color: rgb(27, 49, 122) !important; 
+    border: none !important;         
+    box-shadow: none !important;        
+    outline: none !important;           
+}
+
+.boton-recuperacion:hover {
+    color: rgb(39, 64, 146) !important;
+}
+
+@media (max-width: 1024px) {
+    @media (max-height: 768px) {
+        .contenedor-input {
+            height: 40px !important;
+        }
+        .input-formulario {
+            height: 38px !important;
+        }
+        .btn.boton-accion {
+            height: 40px !important;
+        }
+    
+    }
+    @media (max-height: 868px) {
+        .contenedor-input {
+            height: 30px !important;
+        }
+        .input-formulario {
+            height: 28px !important;
+        }
+        .btn.boton-accion {
+            height: 30px !important;
+        }
+    
+    }
+
+}
+@media (max-width: 1366px) {
+    @media (max-height: 768px) {
+        .contenedor-input {
+            height: 35px !important;
+        }
+        .input-formulario {
+            height: 33px !important;
+        }
+        .btn.boton-accion {
+            height: 35px !important;
+        }
+    
+    }
+    @media (max-height: 668px) {
+        .contenedor-input {
+            height: 30px !important;
+        }
+        .input-formulario {
+            height: 28px !important;
+        }
+        .btn.boton-accion {
+            height: 30px !important;
+        }
+    
+    }
+    @media (max-height: 580px) {
+        .contenedor-input {
+            height: 25px !important;
+        }
+        .input-formulario {
+            height: 23px !important;
+        }
+        .btn.boton-accion {
+            height: 25px !important;
+        }
+    
+    }
+
 }

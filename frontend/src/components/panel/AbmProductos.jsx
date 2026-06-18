@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { obtenerProductos, editarProducto, eliminarProducto } from '../../services/Apis';
+import { obtenerProductos, editarProducto, eliminarProducto,
+         obtenerCategorias, agregarProducto, agregarCategoria,
+         editarCategoria, eliminarCategoria } from '../../services/Apis';
 import './AbmProductos.css'
 import { formatearMoneda, borrarTildes } from '../../services/utils';
 
@@ -7,12 +9,20 @@ const AbmProductos = () => {
 
     const [productos, setProductos] = useState([]);
     const [idProductoActual, setIdProductoActual] = useState(null);
-    const [productoEditado, setProductoEditado] = useState({
-        nombre: '', descripcion: '', precio_unitario: '', precio_mayorista: '', imagen: null
-    });
-    const [busqueda, setBusqueda] = useState('');
+    const [categorias, setCategorias] = useState([]);
+    const [categoriaForm, setCategoriaForm] = useState({ id: null, nombre: '', orden: '' });
 
+    const [productoNuevo, setProductoNuevo] = useState({
+        nombre: '', descripcion: '', precio_unitario: '', precio_mayorista: '', imagen: null, categoria_id: ''
+    });
+    const [productoEditado, setProductoEditado] = useState({
+        nombre: '', descripcion: '', precio_unitario: '', precio_mayorista: '', imagen: null, categoria_id: ''
+    });
+
+    const [busqueda, setBusqueda] = useState('');
     const [loading, setLoading] = useState(false);
+
+
 
     useEffect(() => {
         setLoading(true);
@@ -25,7 +35,39 @@ const AbmProductos = () => {
                 console.error('Error al obtener productos:', error);
                 setLoading(false);
             });
+        obtenerCategorias()
+            .then(response => setCategorias(response.data))
+            .catch(error => console.error('Error al obtener categorias:', error));
     }, []);
+
+    const handleCrearProducto = (e) => {
+        e.preventDefault();
+
+        agregarProducto(
+            productoNuevo.nombre,
+            productoNuevo.descripcion,
+            productoNuevo.precio_unitario,
+            productoNuevo.precio_mayorista,
+            productoNuevo.categoria_id,
+            productoNuevo.imagen
+        )
+            .then(response => {
+                const categoriaEncontrada = categorias.find(c => c.id === Number(response.data.categoria_id));
+                const productoCreado = {
+                    ...response.data,
+                    categoria_nombre: categoriaEncontrada ? categoriaEncontrada.nombre : '- -'
+                };
+                setProductos([productoCreado, ...productos]);
+                
+                document.getElementById('btnCerrarModalAgregar').click();
+                setProductoNuevo({
+                    nombre: '', descripcion: '', precio_unitario: '', precio_mayorista: '', imagen: null, categoria_id: ''
+                });
+            })
+            .catch(error => {
+                console.error('Error al crear el producto:', error);
+            });
+    };
 
     const handleGuardarEdicion = (e) => {
         e.preventDefault();
@@ -35,15 +77,22 @@ const AbmProductos = () => {
         formData.append('descripcion', productoEditado.descripcion);
         formData.append('precio_unitario', productoEditado.precio_unitario);
         formData.append('precio_mayorista', productoEditado.precio_mayorista);
-        
+        formData.append('categoria_id', productoEditado.categoria_id);
+
         if (productoEditado.imagen) {
             formData.append('imagen', productoEditado.imagen);
         }
 
         editarProducto(idProductoActual, formData)
             .then(response => {
+                const categoriaEncontrada = categorias.find(c => c.id === Number(response.data.categoria_id));
+                
+                const productoActualizado = {
+                    ...response.data,
+                    categoria_nombre: categoriaEncontrada ? categoriaEncontrada.nombre : '- -'
+                };
                 setProductos(productos.map(producto => 
-                    producto.id === idProductoActual ? response.data : producto
+                    producto.id === idProductoActual ? productoActualizado : producto
                 ));
                 document.getElementById('btnCerrarModalEdicion').click();
                 setIdProductoActual(null);
@@ -65,6 +114,58 @@ const AbmProductos = () => {
             });
     };
 
+    const handleGuardarCategoria = (e) => {
+        e.preventDefault();
+
+        if (categoriaForm.id) {
+            // EDITANDO
+            editarCategoria(categoriaForm.id, categoriaForm.nombre, categoriaForm.orden)
+                .then(response => {
+                    // 1. Actualizamos la lista de categorías (esto ya lo tenías)
+                    const listaActualizada = categorias.map(c => c.id === categoriaForm.id ? response.data : c);
+                    setCategorias(listaActualizada.sort((a, b) => a.orden - b.orden));
+                    
+                    // 2. NUEVO: Actualizamos los productos que tengan esta categoría
+                    setProductos(productos.map(producto => 
+                        producto.categoria_id === categoriaForm.id 
+                            ? { ...producto, categoria_nombre: response.data.nombre } 
+                            : producto
+                    ));
+
+                    // 3. Limpiamos el form
+                    setCategoriaForm({ id: null, nombre: '', orden: '' }); 
+                })
+                .catch(error => console.error('Error al editar categoría:', error));
+        } else {
+            // CREANDO
+            agregarCategoria(categoriaForm.nombre, categoriaForm.orden)
+                .then(response => {
+                    const listaActualizada = [...categorias, response.data];
+                    setCategorias(listaActualizada.sort((a, b) => a.orden - b.orden));
+                    setCategoriaForm({ id: null, nombre: '', orden: '' }); 
+                })
+                .catch(error => console.error('Error al crear categoría:', error));
+        }
+    };
+
+    const handleEliminarCategoria = (id) => {
+        // Usamos un confirm de Windows para no complicar con otro modal más
+        if(window.confirm('¿Estás seguro de que querés eliminar esta categoría?')) {
+            eliminarCategoria(id)
+                .then(() => {
+                    setCategorias(categorias.filter(c => c.id !== id));
+                })
+                .catch(error => {
+                    // Atajamos el error 400 que configuramos en el backend
+                    if(error.response && error.response.status === 400) {
+                        alert(error.response.data.error); 
+                    } else {
+                        console.error('Error al eliminar categoría:', error);
+                    }
+                });
+        }
+    };
+
     const productosFiltrados = productos.filter(p => 
         borrarTildes(p.nombre.toLowerCase()).includes(borrarTildes(busqueda.toLowerCase())) || 
         borrarTildes(p.id.toString()).includes(borrarTildes(busqueda)));
@@ -79,20 +180,33 @@ const AbmProductos = () => {
             </h6>
             <div className='contenedor-filtros-panel shadow-sm'>
                 <div className='buscador-prod'>
-                        <input 
-                            className='form-control bg-light'
-                            placeholder='Buscar por id o nombre del producto...'
-                            value={busqueda}
-                            onChange={(e) => setBusqueda(e.target.value)}
-                        />
-                        <i 
-                            className='icono-buscador bi bi-search me-2'
-                            alt="Buscar" 
-                        />
-                    </div>
-                <button className='btn btn-primary'>
-                    Agregar Producto
-                </button>
+                    <input 
+                        className='form-control bg-light'
+                        placeholder='Buscar por id o nombre del producto...'
+                        value={busqueda}
+                        onChange={(e) => setBusqueda(e.target.value)}
+                    />
+                    <i 
+                        className='icono-buscador bi bi-search me-2'
+                        alt="Buscar" 
+                    />
+                </div>
+                <div className='d-flex gap-2'>
+                    <button 
+                        className='btn btn-secondary'
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalGestionarCategorias"
+                        >
+                        Gestionar categorías
+                    </button>
+                    <button 
+                        className='btn btn-primary'
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalAgregarProducto"
+                    >
+                        Agregar Producto
+                    </button>
+                </div>
             </div>
             <ul className="list-group flex-row flex-wrap justify-content-center gap-3 mb-5">
                 {loading ? (
@@ -113,13 +227,14 @@ const AbmProductos = () => {
                             <div className='d-flex justify-content-between align-items-end'>
                                 <div>
                                     <strong className='detalles-producto'>Id producto: <span className='fw-normal'>{p.id}</span></strong> <br/>
-                                    <strong className='detalles-producto'>Categoría: <span className='fw-normal'>pañales</span></strong> <br/>
+                                    <strong className='detalles-producto'>Categoría: <span className='fw-normal'>{p.categoria_nombre}</span></strong> <br/>
                                     <strong className='detalles-producto'>Precio unitario: <span className="badge bg-primary">${formatearMoneda(p.precio_unitario)}</span></strong> <br/>
                                     <strong className='detalles-producto'>Precio mayorista: <span className="badge bg-success">${formatearMoneda(p.precio_mayorista)}</span></strong>
                                 </div>
                                 <div className='d-flex justify-content-end align-items-center'>
                                     <button 
                                         className='btn'
+                                        title='Editar producto'
                                         data-bs-toggle="modal" 
                                         data-bs-target="#modalEditarProducto"
                                         onClick={() => {
@@ -129,13 +244,15 @@ const AbmProductos = () => {
                                                 descripcion: p.descripcion,
                                                 precio_unitario: p.precio_unitario,
                                                 precio_mayorista: p.precio_mayorista,
-                                                imagen: p.imagen
+                                                imagen: p.imagen,
+                                                categoria_id: p.categoria_id
                                             })}}
                                     > 
                                         <i className='bi bi-pencil-square fs-4 m-0' style={{color: 'rgb(211, 35, 35)'}}></i>   
                                     </button>
                                     <button 
                                         className='btn'
+                                        title='Eliminar producto'
                                         data-bs-toggle="modal" 
                                         data-bs-target="#modalEliminarProducto"
                                         onClick={() => setIdProductoActual(p.id)}
@@ -151,7 +268,95 @@ const AbmProductos = () => {
                     <div className='list-group-item text-center text-secondary mx-3'>No hay productos disponibles en el inventario.</div>
                 )}
                     
-            </ul>
+            </ul>  
+
+            {/* <-- Modal Agregar Producto --> */}
+            <div className="modal fade" id="modalAgregarProducto" tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content p-2">
+                    <div className="modal-header border-0 pb-0">
+                      <h5 className="modal-title fw-bold">Agregar Nuevo Producto</h5>
+                      <button type="button" className="btn-close d-none" data-bs-dismiss="modal" id="btnCerrarModalAgregar"></button>
+                    </div>
+
+                    <div className="modal-body border-0 pt-2 pb-2">
+                      <form onSubmit={handleCrearProducto}>
+                          <div className="mb-3">
+                              <label className="form-label">Nombre del producto</label>
+                              <input 
+                                type="text" 
+                                className="form-control" 
+                                value={productoNuevo.nombre} 
+                                onChange={e => setProductoNuevo({...productoNuevo, nombre: e.target.value})} 
+                                required
+                              />
+                          </div>
+                          <div className="mb-3">
+                              <label className="form-label">Descripción</label>
+                              <textarea 
+                                className="form-control" 
+                                value={productoNuevo.descripcion} 
+                                onChange={e => setProductoNuevo({...productoNuevo, descripcion: e.target.value})} 
+                                required
+                              />
+                          </div>
+                          <div className="mb-3">
+                              <label className="form-label">Categoría</label>
+                              <select 
+                                  className="form-select" 
+                                  value={productoNuevo.categoria_id} 
+                                  onChange={e => setProductoNuevo({...productoNuevo, categoria_id: e.target.value})}
+                                  required
+                              >
+                                  <option value="">Seleccioná una categoría...</option>
+                                  {categorias.map(cat => (
+                                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                  ))}
+                              </select>
+                          </div>
+                          <div className="row mb-3">
+                              <div className="col">
+                                  <label className="form-label">Precio Unitario</label>
+                                  <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    value={productoNuevo.precio_unitario} 
+                                    onChange={e => setProductoNuevo({...productoNuevo, precio_unitario: e.target.value})} 
+                                    required
+                                  />
+                              </div>
+                              <div className="col">
+                                  <label className="form-label">Precio Mayorista</label>
+                                  <input 
+                                    type="number" 
+                                    className="form-control" 
+                                    value={productoNuevo.precio_mayorista} 
+                                    onChange={e => setProductoNuevo({...productoNuevo, precio_mayorista: e.target.value})} 
+                                    required
+                                  />
+                              </div>
+                          </div>
+                          <div className="mb-4">
+                              <label className="form-label">Imagen</label>
+                              <input 
+                                type="file" 
+                                className="form-control" 
+                                accept="image/*" 
+                                onChange={e => setProductoNuevo({...productoNuevo, imagen: e.target.files[0]})} 
+                                required
+                              />
+                          </div>
+
+                          <div className="d-flex justify-content-end gap-2">
+                              <button type="button" className="btn btn-link text-white bg-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+                              <button type="submit" className="boton-formulario btn bg-primary text-white px-4 rounded-3">Crear producto</button>
+                          </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
             {/* <-- Modal Editar Producto --> */}
             <div className="modal fade" id="modalEditarProducto" tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
@@ -171,6 +376,20 @@ const AbmProductos = () => {
                               <label className="form-label">Descripción</label>
                               <textarea className="form-control" value={productoEditado.descripcion} onChange={e => setProductoEditado({...productoEditado, descripcion: e.target.value})} required />
                           </div>
+                          <div className="mb-3">
+                              <label className="form-label">Categoría</label>
+                              <select 
+                                  className="form-select" 
+                                  value={productoEditado.categoria_id || ''} 
+                                  onChange={e => setProductoEditado({...productoEditado, categoria_id: e.target.value})}
+                                  required
+                              >
+                                  <option value="">Seleccioná una categoría...</option>
+                                  {categorias.map(cat => (
+                                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                                  ))}
+                              </select>
+                          </div>
                           <div className="row mb-3">
                               <div className="col">
                                   <label className="form-label">Precio Unitario</label>
@@ -183,7 +402,6 @@ const AbmProductos = () => {
                           </div>
                           <div className="mb-4">
                               <label className="form-label">Imagen (Opcional)</label>
-                              {/* Al acceder a e.target.files[0] capturamos el archivo físico, no solo el nombre */}
                               <input type="file" className="form-control" accept="image/*" onChange={e => setProductoEditado({...productoEditado, imagen: e.target.files[0]})} />
                               <div className="form-text">Si no seleccionás nada, se conserva la foto actual.</div>
                           </div>
@@ -231,6 +449,76 @@ const AbmProductos = () => {
 
                 </div>
               </div>
+            </div>
+
+            {/* <-- Modal Gestionar Categorías --> */}
+            <div className="modal fade" id="modalGestionarCategorias" tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered modal-lg">
+                    <div className="modal-content p-2">
+                        <div className="modal-header border-0 pb-0">
+                            <h5 className="modal-title fw-bold">Gestionar Categorías</h5>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div className="modal-body border-0 pt-3 pb-4">
+                            
+                            {/* Formulario Superior para Agregar/Editar */}
+                            <form onSubmit={handleGuardarCategoria} className="d-flex gap-2 align-items-end mb-4 bg-light p-3 rounded-3 shadow-sm">
+                                <div className="flex-grow-1">
+                                    <label className="form-label text-secondary mb-1" style={{fontSize: '0.9rem'}}>Nombre de categoría</label>
+                                    <input type="text" className="form-control" value={categoriaForm.nombre} onChange={e => setCategoriaForm({...categoriaForm, nombre: e.target.value})} required />
+                                </div>
+                                <div style={{width: '100px'}}>
+                                    <label className="form-label text-secondary mb-1" style={{fontSize: '0.9rem'}}>N° Orden</label>
+                                    <input type="number" className="form-control" value={categoriaForm.orden} onChange={e => setCategoriaForm({...categoriaForm, orden: e.target.value})} required />
+                                </div>
+                                <div className="d-flex gap-2">
+                                    <button type="submit" className={`btn ${categoriaForm.id ? 'btn-success' : 'btn-primary'}`}>
+                                        {categoriaForm.id ? 'Actualizar' : 'Agregar'}
+                                    </button>
+                                    {/* Si estamos editando, mostramos un botón para cancelar la edición */}
+                                    {categoriaForm.id && (
+                                        <button type="button" className="btn btn-outline-secondary" onClick={() => setCategoriaForm({ id: null, nombre: '', orden: '' })}>
+                                            Cancelar
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
+
+                            {/* Lista Inferior */}
+                            <h6 className="fw-bold mb-3">Categorías existentes</h6>
+                            <ul className="list-group shadow-sm">
+                                {categorias && categorias.length > 0 ? categorias.map(c => (
+                                    <li key={c.id} className="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span className="badge bg-secondary me-3">Orden: {c.orden}</span>
+                                            <span className="fw-medium fs-5">{c.nombre}</span>
+                                        </div>
+                                        <div>
+                                            <button 
+                                                className="btn btn-sm me-2 text-primary" 
+                                                onClick={() => setCategoriaForm(c)}
+                                                title="Editar"
+                                            >
+                                                <i className="bi bi-pencil-square fs-5"></i>
+                                            </button>
+                                            <button 
+                                                className="btn btn-sm text-danger" 
+                                                onClick={() => handleEliminarCategoria(c.id)}
+                                                title="Eliminar"
+                                            >
+                                                <i className="bi bi-trash3-fill fs-5"></i>
+                                            </button>
+                                        </div>
+                                    </li>
+                                )) : (
+                                    <li className="list-group-item text-center text-secondary">No hay categorías creadas.</li>
+                                )}
+                            </ul>
+
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     )

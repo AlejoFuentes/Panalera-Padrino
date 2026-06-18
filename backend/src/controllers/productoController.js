@@ -5,16 +5,6 @@ class ProductoController {
     this.tokenController = tokenController;
   }
 
-  obtenerProductos = async (req, res) => {
-    try {
-      const consulta = await this.pool.query('SELECT * FROM productos ORDER BY creado_en DESC');
-      res.json(consulta.rows);
-    } catch (error) {
-      console.error('Error al cargar la mercadería:', error);
-      res.status(500).json({ error: 'Error del servidor al intentar traer el inventario' });
-    }
-  };
-
   obtenerProductoPorId = async (req, res) => {
     try {
       const { id } = req.params;
@@ -53,19 +43,34 @@ class ProductoController {
     }
   };
 
+  obtenerProductos = async (req, res) => {
+    try {
+      const consulta = await this.pool.query(`
+        SELECT p.*, c.nombre AS categoria_nombre 
+        FROM productos p
+        LEFT JOIN categorias c ON p.categoria_id = c.id
+        ORDER BY p.creado_en DESC
+      `);
+      res.json(consulta.rows);
+    } catch (error) {
+      console.error('Error al cargar la mercadería:', error);
+      res.status(500).json({ error: 'Error del servidor al intentar traer el inventario' });
+    }
+  };
+
   crearProducto = async (req, res) => {
     try {
-      const { nombre, descripcion, precio_unitario, precio_mayorista } = req.body;
-      
+      const { nombre, descripcion, precio_unitario, precio_mayorista, categoria_id } = req.body;
+
       let imagenUrl = null;
       if (req.file) {
           imagenUrl = `/images/${req.file.filename}`;
       }
 
       const consulta = await this.pool.query(
-        `INSERT INTO productos (nombre, descripcion, precio_unitario, precio_mayorista, imagen) 
-         VALUES ($1, $2, $3, $4, $7) RETURNING *`,
-        [nombre, descripcion, precio_unitario, precio_mayorista, imagenUrl]
+        `INSERT INTO productos (nombre, descripcion, precio_unitario, precio_mayorista, imagen, categoria_id) 
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [nombre, descripcion, precio_unitario, precio_mayorista, imagenUrl, categoria_id]
       );
 
       res.status(201).json(consulta.rows[0]);
@@ -78,7 +83,7 @@ class ProductoController {
   editarProducto = async (req, res) => {
     try {
       const { id } = req.params;
-      const { nombre, descripcion, precio_unitario, precio_mayorista } = req.body;
+      const { nombre, descripcion, precio_unitario, precio_mayorista, categoria_id } = req.body;
 
       let consulta;
 
@@ -86,16 +91,16 @@ class ProductoController {
         const imagenUrl = `/images/${req.file.filename}`;
         consulta = await this.pool.query(
           `UPDATE productos 
-           SET nombre = $1, descripcion = $2, precio_unitario = $3, precio_mayorista = $4, imagen = $5 
-           WHERE id = $6 RETURNING *`,
-          [nombre, descripcion, precio_unitario, precio_mayorista, imagenUrl, id]
+           SET nombre = $1, descripcion = $2, precio_unitario = $3, precio_mayorista = $4, imagen = $5, categoria_id = $6 
+           WHERE id = $7 RETURNING *`,
+          [nombre, descripcion, precio_unitario, precio_mayorista, imagenUrl, categoria_id, id]
         );
       } else {
         consulta = await this.pool.query(
           `UPDATE productos 
-           SET nombre = $1, descripcion = $2, precio_unitario = $3, precio_mayorista = $4 
-           WHERE id = $5 RETURNING *`,
-          [nombre, descripcion, precio_unitario, precio_mayorista, id]
+           SET nombre = $1, descripcion = $2, precio_unitario = $3, precio_mayorista = $4, categoria_id = $5 
+           WHERE id = $6 RETURNING *`,
+          [nombre, descripcion, precio_unitario, precio_mayorista, categoria_id, id]
         );
       }
 
@@ -108,7 +113,7 @@ class ProductoController {
       console.error('Error al editar el producto:', error);
       res.status(500).json({ error: 'Error del servidor al editar el producto' });
     }
-  };;
+  };
 
   eliminarProducto = async (req, res) => {
     try {
