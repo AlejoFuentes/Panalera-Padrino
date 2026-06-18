@@ -1,0 +1,39 @@
+.container-admin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.producto-lista {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    padding-top: 20px !important;
+    height: auto !important;
+}
+
+.detalles-producto {
+    font-size: 16px;
+}
+
+.contenedor-filtros-panel {
+    height: 60px; 
+    width: 67.5%;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #fafafa;
+    border-radius: 10px;
+}
+
+.buscador-prod {
+    width: 35%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icono-buscador {
+    margin-left: -30px;
+}

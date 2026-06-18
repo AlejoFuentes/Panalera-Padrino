@@ -55,12 +55,17 @@ class ProductoController {
 
   crearProducto = async (req, res) => {
     try {
-      const { nombre, descripcion, precio, stock, marca_id, categoria_id } = req.body;
+      const { nombre, descripcion, precio_unitario, precio_mayorista } = req.body;
+      
+      let imagenUrl = null;
+      if (req.file) {
+          imagenUrl = `/images/${req.file.filename}`;
+      }
 
       const consulta = await this.pool.query(
-        `INSERT INTO productos (nombre, descripcion, precio, stock, marca_id, categoria_id) 
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [nombre, descripcion, precio, stock, marca_id, categoria_id]
+        `INSERT INTO productos (nombre, descripcion, precio_unitario, precio_mayorista, imagen) 
+         VALUES ($1, $2, $3, $4, $7) RETURNING *`,
+        [nombre, descripcion, precio_unitario, precio_mayorista, imagenUrl]
       );
 
       res.status(201).json(consulta.rows[0]);
@@ -73,14 +78,26 @@ class ProductoController {
   editarProducto = async (req, res) => {
     try {
       const { id } = req.params;
-      const { nombre, descripcion, precio, stock, marca_id, categoria_id } = req.body;
+      const { nombre, descripcion, precio_unitario, precio_mayorista } = req.body;
 
-      const consulta = await this.pool.query(
-        `UPDATE productos 
-         SET nombre = $1, descripcion = $2, precio = $3, stock = $4, marca_id = $5, categoria_id = $6 
-         WHERE id = $7 RETURNING *`,
-        [nombre, descripcion, precio, stock, marca_id, categoria_id, id]
-      );
+      let consulta;
+
+      if (req.file) {
+        const imagenUrl = `/images/${req.file.filename}`;
+        consulta = await this.pool.query(
+          `UPDATE productos 
+           SET nombre = $1, descripcion = $2, precio_unitario = $3, precio_mayorista = $4, imagen = $5 
+           WHERE id = $6 RETURNING *`,
+          [nombre, descripcion, precio_unitario, precio_mayorista, imagenUrl, id]
+        );
+      } else {
+        consulta = await this.pool.query(
+          `UPDATE productos 
+           SET nombre = $1, descripcion = $2, precio_unitario = $3, precio_mayorista = $4 
+           WHERE id = $5 RETURNING *`,
+          [nombre, descripcion, precio_unitario, precio_mayorista, id]
+        );
+      }
 
       if (consulta.rows.length === 0) {
         return res.status(404).json({ error: 'Producto no encontrado para editar' });
@@ -91,11 +108,11 @@ class ProductoController {
       console.error('Error al editar el producto:', error);
       res.status(500).json({ error: 'Error del servidor al editar el producto' });
     }
-  };
+  };;
 
   eliminarProducto = async (req, res) => {
     try {
-      const { id } = req.params;
+      const { id } = req.body;
       
       const consulta = await this.pool.query(
         'DELETE FROM productos WHERE id = $1 RETURNING *', 
@@ -105,8 +122,6 @@ class ProductoController {
       if (consulta.rows.length === 0) {
         return res.status(404).json({ error: 'Producto no encontrado para eliminar' });
       }
-
-      // Devolvemos el producto eliminado por si el frontend lo necesita para mostrar un mensaje
       res.json({ mensaje: 'Producto eliminado exitosamente', producto: consulta.rows[0] });
     } catch (error) {
       console.error('Error al eliminar el producto:', error);
