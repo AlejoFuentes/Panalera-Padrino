@@ -4,6 +4,7 @@ import { obtenerProductos, editarProducto, eliminarProducto,
          editarCategoria, eliminarCategoria } from '../../services/Apis';
 import './AbmProductos.css'
 import { formatearMoneda, borrarTildes } from '../../services/utils';
+import Producto from './Producto'; 
 
 const AbmProductos = () => {
 
@@ -118,26 +119,21 @@ const AbmProductos = () => {
         e.preventDefault();
 
         if (categoriaForm.id) {
-            // EDITANDO
             editarCategoria(categoriaForm.id, categoriaForm.nombre, categoriaForm.orden)
                 .then(response => {
-                    // 1. Actualizamos la lista de categorías (esto ya lo tenías)
                     const listaActualizada = categorias.map(c => c.id === categoriaForm.id ? response.data : c);
                     setCategorias(listaActualizada.sort((a, b) => a.orden - b.orden));
                     
-                    // 2. NUEVO: Actualizamos los productos que tengan esta categoría
                     setProductos(productos.map(producto => 
                         producto.categoria_id === categoriaForm.id 
                             ? { ...producto, categoria_nombre: response.data.nombre } 
                             : producto
                     ));
 
-                    // 3. Limpiamos el form
                     setCategoriaForm({ id: null, nombre: '', orden: '' }); 
                 })
                 .catch(error => console.error('Error al editar categoría:', error));
         } else {
-            // CREANDO
             agregarCategoria(categoriaForm.nombre, categoriaForm.orden)
                 .then(response => {
                     const listaActualizada = [...categorias, response.data];
@@ -149,14 +145,12 @@ const AbmProductos = () => {
     };
 
     const handleEliminarCategoria = (id) => {
-        // Usamos un confirm de Windows para no complicar con otro modal más
         if(window.confirm('¿Estás seguro de que querés eliminar esta categoría?')) {
             eliminarCategoria(id)
                 .then(() => {
                     setCategorias(categorias.filter(c => c.id !== id));
                 })
                 .catch(error => {
-                    // Atajamos el error 400 que configuramos en el backend
                     if(error.response && error.response.status === 400) {
                         alert(error.response.data.error); 
                     } else {
@@ -208,62 +202,31 @@ const AbmProductos = () => {
                     </button>
                 </div>
             </div>
-            <ul className="list-group flex-row flex-wrap justify-content-center gap-3 mb-5">
+            <ul className="contenedor-lista-productos list-group flex-row flex-wrap justify-content-center gap-3 mb-5">
                 {loading ? (
                     <div className='h-100 d-flex justify-content-center align-items-center'>
                         <div className='spinner-border text-primary m-5' role='status'></div>
                     </div>
                 ) : productosFiltrados && productosFiltrados.length > 0 ? (
                     productosFiltrados.map(p => (
-                    <li className="producto-lista list-group-item col-4 rounded-3 shadow-sm" key={p.id}>
-                        <div className='d-flex col-4 justify-content-center mb-3'>
-                            <img src= {p.imagen} className='img-producto h-100 w-100'/>
-                        </div>
-                        <div className='col-8 d-flex flex-column justify-content-between p-2'>
-                            <div>
-                                <h5>{p.nombre}</h5>
-                                <p className='form-text mb-2'>{p.descripcion}</p>
-                            </div>     
-                            <div className='d-flex justify-content-between align-items-end'>
-                                <div>
-                                    <strong className='detalles-producto'>Id producto: <span className='fw-normal'>{p.id}</span></strong> <br/>
-                                    <strong className='detalles-producto'>Categoría: <span className='fw-normal'>{p.categoria_nombre}</span></strong> <br/>
-                                    <strong className='detalles-producto'>Precio unitario: <span className="badge bg-primary">${formatearMoneda(p.precio_unitario)}</span></strong> <br/>
-                                    <strong className='detalles-producto'>Precio mayorista: <span className="badge bg-success">${formatearMoneda(p.precio_mayorista)}</span></strong>
-                                </div>
-                                <div className='d-flex justify-content-end align-items-center'>
-                                    <button 
-                                        className='btn'
-                                        title='Editar producto'
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#modalEditarProducto"
-                                        onClick={() => {
-                                            setIdProductoActual(p.id); 
-                                            setProductoEditado({
-                                                nombre: p.nombre,
-                                                descripcion: p.descripcion,
-                                                precio_unitario: p.precio_unitario,
-                                                precio_mayorista: p.precio_mayorista,
-                                                imagen: p.imagen,
-                                                categoria_id: p.categoria_id
-                                            })}}
-                                    > 
-                                        <i className='bi bi-pencil-square fs-4 m-0' style={{color: 'rgb(211, 35, 35)'}}></i>   
-                                    </button>
-                                    <button 
-                                        className='btn'
-                                        title='Eliminar producto'
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#modalEliminarProducto"
-                                        onClick={() => setIdProductoActual(p.id)}
-                                    >
-                                        <i className='bi bi-trash3-fill fs-4 m-0' style={{color: 'rgb(211, 35, 35)'}}></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                ))
+                        <Producto 
+                            key={p.id}
+                            producto={p}
+                            esAdmin={true} 
+                            onEdit={(prod) => {
+                                setIdProductoActual(prod.id); 
+                                setProductoEditado({
+                                    nombre: prod.nombre,
+                                    descripcion: prod.descripcion,
+                                    precio_unitario: prod.precio_unitario,
+                                    precio_mayorista: prod.precio_mayorista,
+                                    imagen: prod.imagen,
+                                    categoria_id: prod.categoria_id
+                                });
+                            }}
+                            onDelete={(id) => setIdProductoActual(id)}
+                        />
+                    ))
                 ) : (
                     <div className='list-group-item text-center text-secondary mx-3'>No hay productos disponibles en el inventario.</div>
                 )}
@@ -476,7 +439,6 @@ const AbmProductos = () => {
                                     <button type="submit" className={`btn ${categoriaForm.id ? 'btn-success' : 'btn-primary'}`}>
                                         {categoriaForm.id ? 'Actualizar' : 'Agregar'}
                                     </button>
-                                    {/* Si estamos editando, mostramos un botón para cancelar la edición */}
                                     {categoriaForm.id && (
                                         <button type="button" className="btn btn-outline-secondary" onClick={() => setCategoriaForm({ id: null, nombre: '', orden: '' })}>
                                             Cancelar

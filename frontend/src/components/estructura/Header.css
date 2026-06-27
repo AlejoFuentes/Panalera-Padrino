@@ -1,9 +1,47 @@
 .Header-Pañalera {
-    height: 11%;
+    height: 11vh;
     width: 100%;
-    background-color: #0c136ee5;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.021);
-    position: fixed;
+    background-color: #1a2075;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.241);
+    position: sticky;
+
+    .dropdown-menu {
+        background-color: #0c136e; 
+        border: 1px solid rgba(255, 255, 255, 0.15); 
+        backdrop-filter: blur(5px); 
+        margin-top: 8px; 
+    }
+
+    .dropdown-item {
+        color: #f8f9fa !important; 
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover, .dropdown-item:focus {
+        background-color: rgba(18, 19, 82, 0.753) !important;
+        color: #868686 !important;
+    }
+
+    .dropdown-item::before {
+        content: "";
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        background-color: rgba(255, 255, 255, 0.4); 
+        border-radius: 50%; 
+        margin-right: 10px; 
+        margin-bottom: 3px;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dropdown-toggle::after {
+        vertical-align: middle; 
+        margin-left: 8px;
+    }
 }
 
 .imagen-logoPañalera {

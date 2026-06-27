@@ -1,3 +1,5 @@
+import './BotonFlotanteWSP.css'
+
 const BotonFlotanteWSP = () => {
     return(
         <div className="contenedor-flotantes">

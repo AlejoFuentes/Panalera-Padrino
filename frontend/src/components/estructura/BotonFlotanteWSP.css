@@ -1,0 +1,31 @@
+.contenedor-flotantes {
+    position: fixed;
+    bottom: 30px; 
+    right: 30px; 
+    display: flex;
+    flex-direction: column; 
+    gap: 15px; 
+    align-items: center; 
+    z-index: 9999;
+}
+
+.btn-wsp {
+    width: 50px;
+    height: 50px;
+    background-color: #27af59; 
+    color: white;
+    border-radius: 50%; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 27px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-wsp:hover {
+    background-color: #1ebe57; 
+    color: white;
+    transform: scale(1.1); 
+}
+
