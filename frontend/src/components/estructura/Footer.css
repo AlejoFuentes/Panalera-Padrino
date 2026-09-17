@@ -85,3 +85,41 @@
     font-size: 13px;
     color: #ccccccce; 
 }
+
+@media (max-width: 1366px) {
+    .footer-title {
+        font-size: 13px;
+    }
+
+    .footer-subtitle {
+        font-size: 12px;
+    }
+
+    .footer-payment-logos, .footer-shipping-logos, .copyright-text {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 1366px) {
+    .footer-title {
+        text-align: center;
+    }
+
+    .footer-info-list {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .footer-info-list li {
+        justify-content: center;
+    }
+
+    .footer-social-logos {
+        justify-content: center;
+    }
+
+    .footer-subtitle, .footer-payment-logos, .footer-shipping-logos {
+        text-align: center;
+    }
+}

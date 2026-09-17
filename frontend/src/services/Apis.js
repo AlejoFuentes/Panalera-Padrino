@@ -2,12 +2,16 @@ import Axios from 'axios';
 
 const url = 'http://localhost:3000';
 
+const api = Axios.create({
+    baseURL: url
+});
+
 // ==========================================
 //           ENDPOINTS DE PRODUCTOS
 // ==========================================
 
 export const obtenerProductos = () => {  
-  return Axios.get(`${url}/productos`);
+  return api.get('/productos');
 };
 
 export const agregarProducto = (nombre, descripcion, precio_unitario, precio_mayorista, categoria_id, imagen) => {
@@ -23,15 +27,15 @@ export const agregarProducto = (nombre, descripcion, precio_unitario, precio_may
         formData.append('imagen', imagen);
     }
 
-    return Axios.post(`${url}/productos`, formData);
+    return api.post('/productos', formData);
 }
 
 export const editarProducto = (id, formData) => {
-    return Axios.put(`${url}/productos/${id}`, formData);
+    return api.put(`/productos/${id}`, formData);
 };
 
 export const eliminarProducto = (id) => {
-  return Axios.delete(`${url}/productos`, { data: { id } });
+  return api.delete('/productos', { data: { id } });
 };
 
 // ==========================================
@@ -39,17 +43,17 @@ export const eliminarProducto = (id) => {
 // ==========================================
 
 export const obtenerCategorias = () => {
-  return Axios.get(`${url}/categorias`);
+  return api.get('/categorias');
 };
 
 export const agregarCategoria = (nombre, orden) => {
-  return Axios.post(`${url}/categorias`, { nombre, orden });
+  return api.post('/categorias', { nombre, orden });
 };
 
 export const editarCategoria = (id, nombre, orden) => {
-  return Axios.put(`${url}/categorias/${id}`, { nombre, orden });
+  return api.put(`/categorias/${id}`, { nombre, orden });
 };
 
 export const eliminarCategoria = (id) => {
-  return Axios.delete(`${url}/categorias`, { data: { id } });
+  return api.delete('/categorias', { data: { id } });
 };

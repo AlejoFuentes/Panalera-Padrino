@@ -77,6 +77,22 @@ html {
     color: rgb(39, 64, 146) !important;
 }
 
+@media (max-width: 768px) {
+    .logo-tulin-login {
+        width: 280px;
+        height: 210px;
+    }
+
+    .container-formulario-login {
+        width: 100%;
+    }
+
+    .d-flex.flex-column.gap-3.w-50.mt-4 {
+        width: 70% !important;
+        margin-top: 30px !important; 
+    }
+}
+
 @media (max-width: 1024px) {
     @media (max-height: 768px) {
         .contenedor-input {

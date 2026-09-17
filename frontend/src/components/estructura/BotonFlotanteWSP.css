@@ -29,3 +29,20 @@
     transform: scale(1.1); 
 }
 
+@media (max-width: 768px) {
+
+    .contenedor-flotantes {
+        bottom: 20px; 
+        right: 20px; 
+    }
+
+    .btn-wsp {
+        width: 45px;
+        height: 45px;
+    }
+
+    .btn-wsp i {
+        font-size: 17px;
+    }
+}
+

@@ -31,7 +31,7 @@ const Pañalera = () => {
     return (
         <div className='contenedor-panalera'>
             <div className='container pt-5 pb-5'>
-                <h1 className=' mb-5 fw-bold' style={{opacity: 0.8, color: "#10198f"}}>
+                <h1 className='texto-bienvenida mb-5 fw-bold' style={{opacity: 0.8, color: "#10198f"}}>
                     ¡BIENVENIDO/A A DIS. TULIN!
                 </h1>
                 <h2 className='text-center mb-4 fw-bold text-dark' style={{opacity: 0.8}}>

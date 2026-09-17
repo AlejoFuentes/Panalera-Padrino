@@ -10,3 +10,9 @@ body, html {
 :root {
   --color-fondo: rgba(165, 165, 165, 0.37);
 }
+
+@media (max-width: 1366px) {
+  * {
+    font-size: 11px;
+  }
+}

@@ -12,8 +12,8 @@ const Login = () => {
     return (
         <div className='h-100 d-flex justify-content-center align-items-center'>
             <div className='contenedor-login'>
-                <img className='h-100 col-5 ms-5' src="/images/Baby-pana.svg"/>
-                <div className='col-7 d-flex flex-column align-items-center mt-5 h-100'>
+                <img className='h-100 col-5 ms-5 d-none d-md-block' src="/images/Baby-pana.svg"/>
+                <div className='container-formulario-login col-md-7 col-sm-12 d-flex flex-column align-items-center mt-5 h-100'>
                     <img className='logo-tulin-login' src="/images/logo-distulin.png"/>
                     <h1 className='fw-bold mb-4'>¡Bienvenido/a!</h1>
                     <h5>Ingresá tus datos para acceder</h5>

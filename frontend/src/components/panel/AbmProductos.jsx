@@ -5,6 +5,8 @@ import { obtenerProductos, editarProducto, eliminarProducto,
 import './AbmProductos.css'
 import { formatearMoneda, borrarTildes } from '../../services/utils';
 import Producto from './Producto'; 
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AbmProductos = () => {
 
@@ -23,6 +25,15 @@ const AbmProductos = () => {
     const [busqueda, setBusqueda] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // --- ESTADOS PARA EL REMITO ---
+    const [clienteRemito, setClienteRemito] = useState('');
+    const [itemsRemito, setItemsRemito] = useState([]);
+    const [itemActual, setItemActual] = useState({
+        cantidad: '',
+        unidad: 'BULTOS',
+        producto_id: '',
+        precio: ''
+    });
 
 
     useEffect(() => {
@@ -163,9 +174,130 @@ const AbmProductos = () => {
     const productosFiltrados = productos.filter(p => 
         borrarTildes(p.nombre.toLowerCase()).includes(borrarTildes(busqueda.toLowerCase())) || 
         borrarTildes(p.id.toString()).includes(borrarTildes(busqueda)));
+    
+    // --- LÓGICA DEL REMITO ---
+    const handleProductoRemitoChange = (e) => {
+        const prodId = e.target.value;
+        const prod = productos.find(p => p.id === Number(prodId));
+        setItemActual({
+            ...itemActual,
+            producto_id: prodId,
+            precio: prod ? prod.precio_mayorista : '' // Por defecto toma el mayorista, pero se puede editar
+        });
+    };
+
+    const handleAgregarItemRemito = () => {
+        if (!itemActual.cantidad || !itemActual.producto_id || !itemActual.precio) return;
+        const producto = productos.find(p => p.id === Number(itemActual.producto_id));
+        const importe = Number(itemActual.cantidad) * Number(itemActual.precio);
+        
+        setItemsRemito([...itemsRemito, {
+            cantidad_texto: `${itemActual.cantidad} ${itemActual.unidad}`,
+            detalle: producto.nombre,
+            precio: Number(itemActual.precio),
+            importe: importe
+        }]);
+        
+        setItemActual({ cantidad: '', unidad: 'BULTOS', producto_id: '', precio: '' });
+    };
+
+    const generarRemitoPDF = () => {
+        if (!clienteRemito || itemsRemito.length === 0) {
+            alert("Agregá un cliente y al menos un producto.");
+            return;
+        }
+
+        const doc = new jsPDF();
+        const fechaActual = new Date().toLocaleDateString('es-AR');
+
+        // --- ENCABEZADO ESTILO EXCEL ---
+        // Caja Distribuidora
+        doc.setDrawColor(0);
+        doc.setFillColor(240, 240, 240);
+        doc.rect(14, 14, 90, 25, 'F');
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(31, 73, 125); // Azul oscuro
+        doc.text("DISTRIBUIDORA TULIN", 59, 22, { align: "center" });
+        
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+        doc.text("Av. Nicolas videla Nº 3063 Begui / Antartida Arg Nº 3994 Begui", 16, 28);
+        doc.text("11 2410-2875 / 11 5248-4930", 16, 33);
+
+        // Caja Remito
+        doc.setFillColor(217, 201, 186); // Marroncito claro
+        doc.rect(104, 14, 92, 25, 'F');
+        doc.setFontSize(18);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(31, 73, 125);
+        doc.text("REMITO", 150, 22, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont("helvetica", "normal");
+        doc.text("Documento no valido como factura", 150, 28, { align: "center" });
+        doc.setFont("helvetica", "bold");
+        doc.text(`Fecha ${fechaActual}`, 180, 37, { align: "right" });
+
+        // Cuadro central "R"
+        doc.setFillColor(220, 220, 220);
+        doc.rect(97, 14, 14, 14, 'FD'); 
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(31, 73, 125);
+        doc.text("R", 104, 25, { align: "center" });
+
+        // Emails
+        doc.setFontSize(9);
+        doc.setTextColor(31, 73, 125);
+        doc.text("togodofuentes@gmail.com", 59, 43, { align: "center" });
+        doc.text("jacquelinebussinger@gmail.com", 59, 48, { align: "center" });
+
+        // --- CLIENTE ---
+        doc.setFillColor(220, 230, 242); // Celestito
+        doc.rect(14, 53, 182, 8, 'F');
+        doc.setFontSize(11);
+        doc.setTextColor(31, 73, 125);
+        doc.setFont("helvetica", "bold");
+        doc.text(`SRES: ${clienteRemito.toUpperCase()}`, 16, 59);
+
+        // --- TABLA DE PRODUCTOS ---
+        const tableBody = itemsRemito.map(item => [
+            item.cantidad_texto,
+            item.detalle,
+            `$ ${formatearMoneda(item.precio)}`,
+            `$ ${formatearMoneda(item.importe)}`
+        ]);
+
+        const total = itemsRemito.reduce((acc, curr) => acc + curr.importe, 0);
+        
+        tableBody.push([
+            { content: 'TOTAL', colSpan: 3, styles: { halign: 'right', fillColor: [155, 187, 89], textColor: [0,0,0], fontStyle: 'bold', fontSize: 12 } },
+            { content: `$ ${formatearMoneda(total)}`, styles: { fillColor: [155, 187, 89], textColor: [0,0,0], fontStyle: 'bold', halign: 'right', fontSize: 11 } }
+        ]);
+
+        autoTable(doc, {
+            startY: 61,
+            head: [['Cantidad', 'Detalle', 'Precio', 'Importe']],
+            body: tableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [85, 142, 213], textColor: [255, 255, 255], fontStyle: 'bold', halign: 'center' },
+            styles: { fontSize: 9, cellPadding: 2, textColor: [0,0,0] },
+            columnStyles: { 
+                0: { cellWidth: 35 }, 
+                1: { cellWidth: 'auto' }, 
+                2: { cellWidth: 35, halign: 'right' }, 
+                3: { cellWidth: 40, halign: 'right' } 
+            }
+        });
+
+        doc.save(`Remito_${clienteRemito.replace(/\s+/g, '_')}_${fechaActual.replace(/\//g, '-')}.pdf`);
+    };
 
     return (
-        <div className='container-admin'> 
+        <div className='container-admin h-100'> 
             <h2 className='text-center pt-4'>  
                 Panel de administración de productos de Distribuidora Tulin.
             </h2>
@@ -187,18 +319,30 @@ const AbmProductos = () => {
                 </div>
                 <div className='d-flex gap-2'>
                     <button 
+                        className='btn btn-success'
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalDescargarRemito"
+                    >
+                        <i className='bi bi-file-earmark-pdf'></i>
+                        <span className="d-none d-md-inline ms-2">Descargar Remito</span>
+                    </button>
+                    
+                    <button 
                         className='btn btn-secondary'
                         data-bs-toggle="modal" 
                         data-bs-target="#modalGestionarCategorias"
-                        >
-                        Gestionar categorías
+                    >
+                        <i className='bi bi-gear'></i>
+                        <span className="d-none d-md-inline ms-2">Gestionar categorías</span>
                     </button>
+                    
                     <button 
                         className='btn btn-primary'
                         data-bs-toggle="modal" 
                         data-bs-target="#modalAgregarProducto"
                     >
-                        Agregar Producto
+                        <i className='bi bi-plus-circle'></i>
+                        <span className="d-none d-md-inline ms-2">Agregar Producto</span>
                     </button>
                 </div>
             </div>
@@ -238,14 +382,14 @@ const AbmProductos = () => {
                 <div className="modal-dialog modal-dialog-centered">
                   <div className="modal-content p-2">
                     <div className="modal-header border-0 pb-0">
-                      <h5 className="modal-title fw-bold">Agregar Nuevo Producto</h5>
+                      <h5 className="modal-title fw-bold border-bottom w-100 pb-2 mb-2">Nuevo Producto</h5>
                       <button type="button" className="btn-close d-none" data-bs-dismiss="modal" id="btnCerrarModalAgregar"></button>
                     </div>
 
                     <div className="modal-body border-0 pt-2 pb-2">
                       <form onSubmit={handleCrearProducto}>
                           <div className="mb-3">
-                              <label className="form-label">Nombre del producto</label>
+                              <label className="form-label fw-bold">Nombre del producto</label>
                               <input 
                                 type="text" 
                                 className="form-control" 
@@ -255,7 +399,7 @@ const AbmProductos = () => {
                               />
                           </div>
                           <div className="mb-3">
-                              <label className="form-label">Descripción</label>
+                              <label className="form-label fw-bold">Descripción</label>
                               <textarea 
                                 className="form-control" 
                                 value={productoNuevo.descripcion} 
@@ -264,7 +408,7 @@ const AbmProductos = () => {
                               />
                           </div>
                           <div className="mb-3">
-                              <label className="form-label">Categoría</label>
+                              <label className="form-label fw-bold">Categoría</label>
                               <select 
                                   className="form-select" 
                                   value={productoNuevo.categoria_id} 
@@ -279,7 +423,7 @@ const AbmProductos = () => {
                           </div>
                           <div className="row mb-3">
                               <div className="col">
-                                  <label className="form-label">Precio Unitario</label>
+                                  <label className="form-label fw-bold">Precio Unitario</label>
                                   <input 
                                     type="number" 
                                     className="form-control" 
@@ -289,7 +433,7 @@ const AbmProductos = () => {
                                   />
                               </div>
                               <div className="col">
-                                  <label className="form-label">Precio Mayorista</label>
+                                  <label className="form-label fw-bold">Precio Mayorista</label>
                                   <input 
                                     type="number" 
                                     className="form-control" 
@@ -300,7 +444,7 @@ const AbmProductos = () => {
                               </div>
                           </div>
                           <div className="mb-4">
-                              <label className="form-label">Imagen</label>
+                              <label className="form-label fw-bold">Imagen</label>
                               <input 
                                 type="file" 
                                 className="form-control" 
@@ -312,7 +456,7 @@ const AbmProductos = () => {
 
                           <div className="d-flex justify-content-end gap-2">
                               <button type="button" className="btn btn-link text-white bg-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
-                              <button type="submit" className="boton-formulario btn bg-primary text-white px-4 rounded-3">Crear producto</button>
+                              <button type="submit" className="boton-formulario btn bg-primary text-white px-4 rounded-3">Agregar producto</button>
                           </div>
                       </form>
                     </div>
@@ -324,7 +468,7 @@ const AbmProductos = () => {
             <div className="modal fade" id="modalEditarProducto" tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
                   <div className="modal-content p-2">
-                    <div className="modal-header border-0 pb-0">
+                    <div className="modal-header border-bottom pb-2 mb-1">
                       <h5 className="modal-title fw-bold">Editar Producto</h5>
                       <button type="button" className="btn-close d-none" data-bs-dismiss="modal" id="btnCerrarModalEdicion"></button>
                     </div>
@@ -332,15 +476,15 @@ const AbmProductos = () => {
                     <div className="modal-body border-0 pt-2 pb-2">
                       <form onSubmit={handleGuardarEdicion}>
                           <div className="mb-3">
-                              <label className="form-label">Nombre del producto</label>
+                              <label className="form-label fw-bold">Nombre del producto</label>
                               <input type="text" className="form-control" value={productoEditado.nombre} onChange={e => setProductoEditado({...productoEditado, nombre: e.target.value})} required />
                           </div>
                           <div className="mb-3">
-                              <label className="form-label">Descripción</label>
+                              <label className="form-label fw-bold">Descripción</label>
                               <textarea className="form-control" value={productoEditado.descripcion} onChange={e => setProductoEditado({...productoEditado, descripcion: e.target.value})} required />
                           </div>
                           <div className="mb-3">
-                              <label className="form-label">Categoría</label>
+                              <label className="form-label fw-bold">Categoría</label>
                               <select 
                                   className="form-select" 
                                   value={productoEditado.categoria_id || ''} 
@@ -355,16 +499,16 @@ const AbmProductos = () => {
                           </div>
                           <div className="row mb-3">
                               <div className="col">
-                                  <label className="form-label">Precio Unitario</label>
+                                  <label className="form-label fw-bold">Precio Unitario</label>
                                   <input type="number" className="form-control" value={productoEditado.precio_unitario} onChange={e => setProductoEditado({...productoEditado, precio_unitario: e.target.value})} required />
                               </div>
                               <div className="col">
-                                  <label className="form-label">Precio Mayorista</label>
+                                  <label className="form-label fw-bold">Precio Mayorista</label>
                                   <input type="number" className="form-control" value={productoEditado.precio_mayorista} onChange={e => setProductoEditado({...productoEditado, precio_mayorista: e.target.value})} required />
                               </div>
                           </div>
                           <div className="mb-4">
-                              <label className="form-label">Imagen (Opcional)</label>
+                              <label className="form-label fw-bold">Imagen</label>
                               <input type="file" className="form-control" accept="image/*" onChange={e => setProductoEditado({...productoEditado, imagen: e.target.files[0]})} />
                               <div className="form-text">Si no seleccionás nada, se conserva la foto actual.</div>
                           </div>
@@ -406,7 +550,7 @@ const AbmProductos = () => {
                         onClick={handleEliminarProducto}
                         data-bs-dismiss="modal"
                     >
-                        Borrar
+                        Eliminar
                     </button>
                   </div>
 
@@ -482,6 +626,108 @@ const AbmProductos = () => {
                     </div>
                 </div>
             </div>
+
+            {/* <-- Modal Descargar Remito --> */}
+            <div className="modal fade" id="modalDescargarRemito" tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-lg modal-dialog-centered">
+                  <div className="modal-content">
+                    <div className="modal-header border-bottom pb-2 mb-2">
+                      <h5 className="modal-title fw-bold">Generar Remito PDF</h5>
+                      <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div className="modal-body border-0 pt-2 pb-2">
+                        <div className="mb-4">
+                            <label className="form-label fw-bold text-primary">Nombre del Cliente / Empresa</label>
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                placeholder="Ej: LA PERLA"
+                                value={clienteRemito} 
+                                onChange={e => setClienteRemito(e.target.value)} 
+                            />
+                        </div>
+
+                        <div className="card shadow-sm border-0 mb-4 bg-light">
+                            <div className="card-body">
+                                <h6 className="fw-bold mb-3">Agregar Productos</h6>
+                                <div className="row g-2 align-items-end">
+                                    <div className="col-md-2">
+                                        <label className="form-label small fw-bold mb-1">Cant.</label>
+                                        <input type="number" className="form-control form-control-sm" value={itemActual.cantidad} onChange={e => setItemActual({...itemActual, cantidad: e.target.value})} />
+                                    </div>
+                                    <div className="col-md-2">
+                                        <label className="form-label small fw-bold mb-1">Unidad</label>
+                                        <select className="form-select form-select-sm" value={itemActual.unidad} onChange={e => setItemActual({...itemActual, unidad: e.target.value})}>
+                                            <option value="BULTOS">BULTOS</option>
+                                            <option value="UNIDADES">UNIDADES</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-md-4">
+                                        <label className="form-label small fw-bold mb-1">Producto</label>
+                                        <select className="form-select form-select-sm" value={itemActual.producto_id} onChange={handleProductoRemitoChange}>
+                                            <option value="">Seleccionar...</option>
+                                            {productos.map(p => (
+                                                <option key={p.id} value={p.id}>{p.nombre}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-md-2">
+                                        <label className="form-label small fw-bold mb-1">Precio Unit.</label>
+                                        <input type="number" className="form-control form-control-sm" value={itemActual.precio} onChange={e => setItemActual({...itemActual, precio: e.target.value})} />
+                                    </div>
+                                    <div className="col-md-2">
+                                        <button type="button" className="btn btn-primary btn-sm w-100" onClick={handleAgregarItemRemito}>
+                                            <i className="bi bi-plus-lg"></i> Agregar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="table-responsive">
+                            <table className="table table-sm table-bordered table-hover align-middle">
+                                <thead className="table-dark text-center">
+                                    <tr>
+                                        <th>Cantidad</th>
+                                        <th>Detalle</th>
+                                        <th>Precio</th>
+                                        <th>Importe</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {itemsRemito.length > 0 ? itemsRemito.map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td className="text-center">{item.cantidad_texto}</td>
+                                            <td>{item.detalle}</td>
+                                            <td className="text-end">${formatearMoneda(item.precio)}</td>
+                                            <td className="text-end fw-bold">${formatearMoneda(item.importe)}</td>
+                                            <td className="text-center">
+                                                <button className="btn btn-sm text-danger p-0" onClick={() => setItemsRemito(itemsRemito.filter((_, i) => i !== idx))}>
+                                                    <i className="bi bi-trash-fill"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="5" className="text-center text-muted py-3">Aún no hay productos agregados al remito.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" className="btn btn-success" onClick={generarRemitoPDF} disabled={itemsRemito.length === 0}>
+                            <i className="bi bi-file-earmark-pdf me-2"></i>Generar y Descargar
+                        </button>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
         </div>
     )
 }

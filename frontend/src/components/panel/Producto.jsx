@@ -19,7 +19,7 @@ const Producto = ({ producto, esAdmin, onEdit, onDelete }) => {
                 <div className='d-flex justify-content-between align-items-end'>
                     <div>
                         {esAdmin && (
-                            <strong className='detalles-producto'>Id producto: <span className='fw-normal'>{producto.id}</span> <br/></strong>
+                            <strong className='detalles-producto'>ID Producto: <span className='fw-normal'>{producto.id}</span> <br/></strong>
                         )}
                         <strong className='detalles-producto'>Categoría: <span className='fw-normal'>{producto.categoria_nombre}</span></strong> <br/>
                         <strong className='detalles-producto'>Precio unitario: <span className="badge bg-primary">${formatearMoneda(producto.precio_unitario)}</span></strong> <br/>

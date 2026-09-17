@@ -5,7 +5,7 @@ import Footer from './components/estructura/Footer.jsx';
 import Pañalera from './components/contenido/Pañalera.jsx';
 import Categoria from './components/contenido/Categoria.jsx';
 import SobreNosotros from './components/contenido/SobreNosotros.jsx';
-import Login from './components/panel/login.jsx';
+import Login from './components/panel/Login.jsx';
 import AbmProductos from './components/panel/AbmProductos.jsx';
 
 const App = () => {

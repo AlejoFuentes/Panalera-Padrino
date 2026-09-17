@@ -4,6 +4,8 @@
     background-color: #1a2075;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.241);
     position: sticky;
+    top: 0;
+    z-index: 1030;
 
     .dropdown-menu {
         background-color: #0c136e; 
@@ -60,4 +62,41 @@
 
 .nav-item:active {
     border: 1px solid #CCCCCC;  
+}
+
+@media (max-width: 768px) {
+    .imagen-logoPañalera {
+        width: 120px !important;
+    }
+
+    .contenedor-navbar {
+        justify-content: end;
+    }
+
+    .navbar-toggler.collapsed {
+        border: 1px solid #888888;
+    }
+
+    .navbar-toggler-icon {
+        filter: invert(1); 
+    }
+
+    #inicio {
+        position: relative; 
+    }
+
+    #inicio .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        right: 0; 
+        min-width: 150px;
+        background-color: #1a2075;
+        padding: 15px;
+        border-radius: 10px; 
+        z-index: 1050;
+    }
+
+    .nav-link.text-light {
+        padding-inline: 5px;
+    }
 }
