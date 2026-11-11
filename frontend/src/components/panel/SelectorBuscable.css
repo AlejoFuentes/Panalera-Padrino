@@ -1,0 +1,18 @@
+.lista-selector-buscable {
+  top: 100%;
+  left: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1060;
+  cursor: pointer;
+}
+
+.icono-selector-buscable {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: #6c757d;
+  pointer-events: none;
+}

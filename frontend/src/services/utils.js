@@ -9,3 +9,5 @@ export const formatearMoneda = (valor) => {
 export const borrarTildes = (texto) => {
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 };
+
+export const NUMERO_WHATSAPP = '5491152484930';

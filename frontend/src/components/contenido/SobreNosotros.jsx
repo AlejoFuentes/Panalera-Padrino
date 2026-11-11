@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router';
 import './SobreNosotros.css';
+import { NUMERO_WHATSAPP } from '../../services/utils';
 
 const SobreNosotros = () => {
     const navigate = useNavigate();
 
-    // Reutilizamos el número de WhatsApp que ya tenías en los productos
-    const numeroWhatsapp = '5491152484930'; 
     const mensajeWa = '¡Hola! Me gustaría hacer una consulta.';
-    const linkWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent(mensajeWa)}`;
+    const linkWhatsapp = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensajeWa)}`;
 
     return(
         // Usamos la misma clase de fondo que en tus otras pantallas para mantener el diseño
@@ -24,7 +23,7 @@ const SobreNosotros = () => {
                             Distribuidora Tulin
                         </h1>
                         <p className='fs-5 text-secondary mb-4 lh-base'>
-                            [Lorem ipsum dolor sit, amet consectetur adipisicing elit. Commodi accusantium laboriosam cum corrupti quae modi dolorem nobis laudantium recusandae cumque odio atque tempora sint reprehenderit, fugit eveniet mollitia reiciendis. Quas. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Soluta commodi iste architecto quibusdam sequi exercitationem totam itaque doloremque adipisci, animi aperiam natus eaque error ad assumenda illo facere deserunt fugiat. ]
+                            Somos una distribuidora mayorista y minorista, dedicada a la comercialización y provisión de productos de higiene, descartables, artículos hospitalarios e insumos de uso diario. Trabajamos con primeras marcas, garantizando calidad, variedad y los mejores precios del mercado.
                         </p>
                         <button 
                             className='btn btn-lg text-white rounded-pill px-5 py-2 fw-bold shadow-sm' 
@@ -46,8 +45,11 @@ const SobreNosotros = () => {
                                 style={{ maxWidth: '280px' }}
                             />
                         </div>
+                        <p className='text-secondary mb-2 fs-6 px-3'>
+                            Realizamos entregas diarias en Capital Federal, Gran Buenos Aires y el Interior del país.
+                        </p>
                         <p className='text-secondary mb-4 fs-6 px-3'>
-                            [Lorem ipsum dolor sit amet, consectetur adipisicing elit. Repudiandae ex minima iusto tempora illo. Est officiis, dolorum fugiat asperiores corporis voluptas ea dolores aliquid sunt quae dignissimos doloremque? Facere, fuga. Lorem ipsum, dolor sit amet consectetur adipisicing elit. Repellendus repellat placeat, nobis nihil aperiam distinctio iure atque nesciunt quo sequi praesentium! Nihil amet laborum animi, atque commodi fugiat libero dolores. ]
+                            Brindamos un servicio ágil y confiable, con asesoramiento personalizado para comercios, instituciones y empresas.
                         </p>
                         <a 
                             href={linkWhatsapp}

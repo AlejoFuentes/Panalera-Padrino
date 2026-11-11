@@ -1,9 +1,13 @@
 import './BotonFlotanteWSP.css'
+import Carrito from './Carrito';
 
 const BotonFlotanteWSP = () => {
     return(
         <div className="contenedor-flotantes">
-            
+
+            {/* <-- BOTÓN FLOTANTE DEL CARRITO (solo aparece si hay productos) --> */}
+            <Carrito/>
+
             {/* <-- BOTÓN FLOTANTE DE WHATSAPP --> */}
                 <a 
                   href="https://wa.me/5491152484930?text=Hola!%20Tengo%20una%20consulta%20sobre%20un%20producto" 

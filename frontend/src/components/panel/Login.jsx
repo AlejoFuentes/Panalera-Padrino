@@ -1,13 +1,26 @@
 import './Login.css'
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { login } from '../../services/Apis';
+import { mostrarExito, mostrarError } from '../../services/toastify';
+
 const Login = () => {
 
     const navigate = useNavigate();
-    
+    const [credenciales, setCredenciales] = useState({ email: '', password: '' });
+    const [cargando, setCargando] = useState(false);
+
     const loggear = (e) => {
         e.preventDefault();
-        navigate('/admin/productos')
-        console.log('Usuario loggeado')
+        setCargando(true);
+
+        login(credenciales.email, credenciales.password)
+            .then(() => {
+                mostrarExito('¡Bienvenido/a!');
+                navigate('/admin/productos');
+            })
+            .catch(error => mostrarError('Error al iniciar sesión', error))
+            .finally(() => setCargando(false));
     }
     return (
         <div className='h-100 d-flex justify-content-center align-items-center'>
@@ -23,7 +36,11 @@ const Login = () => {
                             <input 
                                 className='input-formulario' 
                                 type="email"
-                                placeholder='Usuario' 
+                                placeholder='Email'
+                                autoComplete='username'
+                                value={credenciales.email}
+                                onChange={e => setCredenciales({...credenciales, email: e.target.value})}
+                                required
                             />
                         </div>
                         <div className='contenedor-input'>
@@ -31,10 +48,16 @@ const Login = () => {
                             <input 
                                 className='input-formulario' 
                                 type="password"
-                                placeholder='Contraseña' 
+                                placeholder='Contraseña'
+                                autoComplete='current-password'
+                                value={credenciales.password}
+                                onChange={e => setCredenciales({...credenciales, password: e.target.value})}
+                                required
                             />
                         </div>
-                        <button className='btn boton-accion' type='submit'>Iniciar sesión</button>
+                        <button className='btn boton-accion' type='submit' disabled={cargando}>
+                            {cargando ? <span className='spinner-border spinner-border-sm'></span> : 'Iniciar sesión'}
+                        </button>
                     </form>
                     {/* <button className='btn boton-recuperacion'>¿Olvidaste tu contraseña?</button> */}
                 </div>

@@ -3,8 +3,34 @@ import Axios from 'axios';
 const url = 'http://localhost:3000';
 
 const api = Axios.create({
-    baseURL: url
+    baseURL: url,
+    withCredentials: true // Manda la cookie con el token en cada request
 });
+
+// Si el token venció o no es válido estando en el panel, se vuelve al login
+api.interceptors.response.use(
+    response => response,
+    error => {
+        const status = error.response?.status;
+        const enPanel = window.location.pathname.startsWith('/admin/');
+        if ((status === 401 || status === 403) && enPanel) {
+            window.location.href = '/admin';
+        }
+        return Promise.reject(error);
+    }
+);
+
+// ==========================================
+//           ENDPOINTS DE AUTENTICACIÓN
+// ==========================================
+
+export const login = (email, password) => {
+    return api.post('/auth/login', { email, password });
+};
+
+export const verificarSesion = () => {
+    return api.get('/auth/verificar');
+};
 
 // ==========================================
 //           ENDPOINTS DE PRODUCTOS
@@ -32,6 +58,10 @@ export const agregarProducto = (nombre, descripcion, precio_unitario, precio_may
 
 export const editarProducto = (id, formData) => {
     return api.put(`/productos/${id}`, formData);
+};
+
+export const aumentarPreciosPorCategoria = (categoriaId, porcentaje) => {
+    return api.put(`/productos/categoria/${categoriaId}/aumento`, { porcentaje });
 };
 
 export const eliminarProducto = (id) => {

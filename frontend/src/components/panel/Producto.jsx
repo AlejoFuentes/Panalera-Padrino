@@ -1,10 +1,10 @@
 import { formatearMoneda } from '../../services/utils';
+import { useCarrito } from '../../context/CarritoContext';
 
 const Producto = ({ producto, esAdmin, onEdit, onDelete }) => {
-    
-    const numeroWhatsapp = '5491152484930'; 
-    const mensajeWa = `¡Hola! Me interesa el producto: ${producto.nombre}`;
-    const linkWhatsapp = `https://wa.me/${numeroWhatsapp}?text=${encodeURIComponent(mensajeWa)}`;
+
+    const { agregarProducto, cambiarCantidad, obtenerCantidad } = useCarrito();
+    const cantidadEnCarrito = obtenerCantidad(producto.id);
 
     return (
         <li className="producto-lista list-group-item rounded-3 shadow-sm">
@@ -48,15 +48,20 @@ const Producto = ({ producto, esAdmin, onEdit, onDelete }) => {
                                     <i className='bi bi-trash3-fill fs-4 m-0' style={{color: 'rgb(211, 35, 35)'}}></i>
                                 </button>
                             </>
+                        ) : cantidadEnCarrito > 0 ? (
+                            // Si ya está en el pedido, se muestra el contador para sumar/restar
+                            <div className="input-group input-group-sm flex-nowrap" style={{width: 'auto'}}>
+                                <button className="btn btn-outline-success" onClick={() => cambiarCantidad(producto.id, cantidadEnCarrito - 1)}>−</button>
+                                <span className="input-group-text bg-white fw-bold">{cantidadEnCarrito}</span>
+                                <button className="btn btn-outline-success" onClick={() => cambiarCantidad(producto.id, cantidadEnCarrito + 1)}>+</button>
+                            </div>
                         ) : (
-                            <a 
-                                href={linkWhatsapp}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <button
                                 className="btn btn-success d-flex align-items-center gap-2"
+                                onClick={() => agregarProducto(producto)}
                             >
-                                <i className="bi bi-whatsapp"></i> Comprar
-                            </a>
+                                <i className="bi bi-cart-plus"></i> Agregar
+                            </button>
                         )}
                     </div>
                 </div>

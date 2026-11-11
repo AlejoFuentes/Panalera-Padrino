@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { obtenerProductos, editarProducto, eliminarProducto,
          obtenerCategorias, agregarProducto, agregarCategoria,
-         editarCategoria, eliminarCategoria } from '../../services/Apis';
+         editarCategoria, eliminarCategoria, aumentarPreciosPorCategoria } from '../../services/Apis';
 import './AbmProductos.css'
 import { formatearMoneda, borrarTildes } from '../../services/utils';
-import Producto from './Producto'; 
+import Producto from './Producto';
+import SelectorBuscable from './SelectorBuscable';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { mostrarExito, mostrarError, mostrarAdvertencia, confirmarAccion } from '../../services/toastify';
 
 const AbmProductos = () => {
 
@@ -35,6 +37,9 @@ const AbmProductos = () => {
         precio: ''
     });
 
+    // --- ESTADOS PARA EL AUMENTO DE PRECIOS ---
+    const [aumentoForm, setAumentoForm] = useState({ categoria_id: '', porcentaje: '' });
+
 
     useEffect(() => {
         setLoading(true);
@@ -44,12 +49,12 @@ const AbmProductos = () => {
                 setLoading(false);
             })
             .catch(error => {
-                console.error('Error al obtener productos:', error);
+                mostrarError('Error al obtener los productos', error);
                 setLoading(false);
             });
         obtenerCategorias()
             .then(response => setCategorias(response.data))
-            .catch(error => console.error('Error al obtener categorias:', error));
+            .catch(error => mostrarError('Error al obtener las categorías', error));
     }, []);
 
     const handleCrearProducto = (e) => {
@@ -75,10 +80,9 @@ const AbmProductos = () => {
                 setProductoNuevo({
                     nombre: '', descripcion: '', precio_unitario: '', precio_mayorista: '', imagen: null, categoria_id: ''
                 });
+                mostrarExito('Producto creado correctamente');
             })
-            .catch(error => {
-                console.error('Error al crear el producto:', error);
-            });
+            .catch(error => mostrarError('Error al crear el producto', error));
     };
 
     const handleGuardarEdicion = (e) => {
@@ -108,22 +112,19 @@ const AbmProductos = () => {
                 ));
                 document.getElementById('btnCerrarModalEdicion').click();
                 setIdProductoActual(null);
+                mostrarExito('Producto editado correctamente');
             })
-            .catch(error => {
-                console.error('Error al editar el producto:', error);
-            });
+            .catch(error => mostrarError('Error al editar el producto', error));
     };
 
     const handleEliminarProducto = () => {
         eliminarProducto(idProductoActual)
             .then(response => {
-                console.log(response.data.mensaje);
                 setProductos(productos.filter(producto => producto.id !== idProductoActual));
                 setIdProductoActual(null);
+                mostrarExito(response.data.mensaje);
             })
-            .catch(error => {
-                console.error('Error al eliminar el producto:', error);
-            });
+            .catch(error => mostrarError('Error al eliminar el producto', error));
     };
 
     const handleGuardarCategoria = (e) => {
@@ -141,53 +142,79 @@ const AbmProductos = () => {
                             : producto
                     ));
 
-                    setCategoriaForm({ id: null, nombre: '', orden: '' }); 
+                    setCategoriaForm({ id: null, nombre: '', orden: '' });
+                    mostrarExito('Categoría editada correctamente');
                 })
-                .catch(error => console.error('Error al editar categoría:', error));
+                .catch(error => mostrarError('Error al editar la categoría', error));
         } else {
             agregarCategoria(categoriaForm.nombre, categoriaForm.orden)
                 .then(response => {
                     const listaActualizada = [...categorias, response.data];
                     setCategorias(listaActualizada.sort((a, b) => a.orden - b.orden));
-                    setCategoriaForm({ id: null, nombre: '', orden: '' }); 
+                    setCategoriaForm({ id: null, nombre: '', orden: '' });
+                    mostrarExito('Categoría creada correctamente');
                 })
-                .catch(error => console.error('Error al crear categoría:', error));
+                .catch(error => mostrarError('Error al crear la categoría', error));
         }
     };
 
-    const handleEliminarCategoria = (id) => {
-        if(window.confirm('¿Estás seguro de que querés eliminar esta categoría?')) {
-            eliminarCategoria(id)
-                .then(() => {
-                    setCategorias(categorias.filter(c => c.id !== id));
-                })
-                .catch(error => {
-                    if(error.response && error.response.status === 400) {
-                        alert(error.response.data.error); 
-                    } else {
-                        console.error('Error al eliminar categoría:', error);
-                    }
-                });
+    const handleEliminarCategoria = async (id) => {
+        if (!(await confirmarAccion('¿Estás seguro de que querés eliminar esta categoría?', 'Eliminar'))) {
+            return;
         }
+
+        eliminarCategoria(id)
+            .then(() => {
+                setCategorias(categorias.filter(c => c.id !== id));
+                mostrarExito('Categoría eliminada correctamente');
+            })
+            .catch(error => mostrarError('Error al eliminar la categoría', error));
     };
 
-    const productosFiltrados = productos.filter(p => 
+    // --- LÓGICA DEL AUMENTO DE PRECIOS ---
+    const productosCategoriaAumento = productos.filter(p => p.categoria_id === Number(aumentoForm.categoria_id));
+
+    const handleAumentarPrecios = async (e) => {
+        e.preventDefault();
+
+        const categoria = categorias.find(c => c.id === Number(aumentoForm.categoria_id));
+        const mensaje = `¿Seguro que querés aplicar un ${aumentoForm.porcentaje}% a los ${productosCategoriaAumento.length} productos de "${categoria.nombre}"?`;
+        if (!(await confirmarAccion(mensaje, 'Aplicar'))) {
+            return;
+        }
+
+        aumentarPreciosPorCategoria(aumentoForm.categoria_id, aumentoForm.porcentaje)
+            .then(response => {
+                const actualizados = response.data.productos;
+                setProductos(productos.map(producto => {
+                    const actualizado = actualizados.find(a => a.id === producto.id);
+                    return actualizado ? { ...actualizado, categoria_nombre: producto.categoria_nombre } : producto;
+                }));
+                mostrarExito(response.data.mensaje);
+                document.getElementById('btnCerrarModalAumento').click();
+                setAumentoForm({ categoria_id: '', porcentaje: '' });
+            })
+            .catch(error => mostrarError('Error al aumentar los precios', error));
+    };
+
+    const productosFiltrados = productos.filter(p =>
         borrarTildes(p.nombre.toLowerCase()).includes(borrarTildes(busqueda.toLowerCase())) || 
         borrarTildes(p.id.toString()).includes(borrarTildes(busqueda)));
     
     // --- LÓGICA DEL REMITO ---
-    const handleProductoRemitoChange = (e) => {
-        const prodId = e.target.value;
-        const prod = productos.find(p => p.id === Number(prodId));
+    const handleSeleccionarProductoRemito = (prod) => {
         setItemActual({
             ...itemActual,
-            producto_id: prodId,
-            precio: prod ? prod.precio_mayorista : '' // Por defecto toma el mayorista, pero se puede editar
+            producto_id: prod.id,
+            precio: prod.precio_mayorista // Por defecto toma el mayorista, pero se puede editar
         });
     };
 
     const handleAgregarItemRemito = () => {
-        if (!itemActual.cantidad || !itemActual.producto_id || !itemActual.precio) return;
+        if (!itemActual.cantidad || !itemActual.producto_id || !itemActual.precio) {
+            mostrarAdvertencia('Completá la cantidad, el producto y el precio.');
+            return;
+        }
         const producto = productos.find(p => p.id === Number(itemActual.producto_id));
         const importe = Number(itemActual.cantidad) * Number(itemActual.precio);
         
@@ -203,7 +230,7 @@ const AbmProductos = () => {
 
     const generarRemitoPDF = () => {
         if (!clienteRemito || itemsRemito.length === 0) {
-            alert("Agregá un cliente y al menos un producto.");
+            mostrarAdvertencia('Agregá un cliente y al menos un producto.');
             return;
         }
 
@@ -327,9 +354,18 @@ const AbmProductos = () => {
                         <span className="d-none d-md-inline ms-2">Descargar Remito</span>
                     </button>
                     
-                    <button 
+                    <button
+                        className='btn btn-danger'
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalAumentarPrecios"
+                    >
+                        <i className='bi bi-graph-up-arrow'></i>
+                        <span className="d-none d-md-inline ms-2">Aumentar precios</span>
+                    </button>
+
+                    <button
                         className='btn btn-secondary'
-                        data-bs-toggle="modal" 
+                        data-bs-toggle="modal"
                         data-bs-target="#modalGestionarCategorias"
                     >
                         <i className='bi bi-gear'></i>
@@ -409,17 +445,13 @@ const AbmProductos = () => {
                           </div>
                           <div className="mb-3">
                               <label className="form-label fw-bold">Categoría</label>
-                              <select 
-                                  className="form-select" 
-                                  value={productoNuevo.categoria_id} 
-                                  onChange={e => setProductoNuevo({...productoNuevo, categoria_id: e.target.value})}
+                              <SelectorBuscable
+                                  opciones={categorias}
+                                  value={productoNuevo.categoria_id}
+                                  onChange={cat => setProductoNuevo({...productoNuevo, categoria_id: cat.id})}
+                                  placeholder="Buscar categoría..."
                                   required
-                              >
-                                  <option value="">Seleccioná una categoría...</option>
-                                  {categorias.map(cat => (
-                                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                  ))}
-                              </select>
+                              />
                           </div>
                           <div className="row mb-3">
                               <div className="col">
@@ -485,17 +517,13 @@ const AbmProductos = () => {
                           </div>
                           <div className="mb-3">
                               <label className="form-label fw-bold">Categoría</label>
-                              <select 
-                                  className="form-select" 
-                                  value={productoEditado.categoria_id || ''} 
-                                  onChange={e => setProductoEditado({...productoEditado, categoria_id: e.target.value})}
+                              <SelectorBuscable
+                                  opciones={categorias}
+                                  value={productoEditado.categoria_id}
+                                  onChange={cat => setProductoEditado({...productoEditado, categoria_id: cat.id})}
+                                  placeholder="Buscar categoría..."
                                   required
-                              >
-                                  <option value="">Seleccioná una categoría...</option>
-                                  {categorias.map(cat => (
-                                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                                  ))}
-                              </select>
+                              />
                           </div>
                           <div className="row mb-3">
                               <div className="col">
@@ -627,6 +655,92 @@ const AbmProductos = () => {
                 </div>
             </div>
 
+            {/* <-- Modal Aumentar Precios --> */}
+            <div className="modal fade" id="modalAumentarPrecios" tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content p-2">
+                    <div className="modal-header border-bottom pb-2 mb-1">
+                      <h5 className="modal-title fw-bold">Aumentar precios por categoría</h5>
+                      <button type="button" className="btn-close" data-bs-dismiss="modal" id="btnCerrarModalAumento"></button>
+                    </div>
+
+                    <div className="modal-body border-0 pt-2 pb-2">
+                      <form onSubmit={handleAumentarPrecios}>
+                          <div className="mb-3">
+                              <label className="form-label fw-bold">Categoría</label>
+                              <SelectorBuscable
+                                  opciones={categorias}
+                                  value={aumentoForm.categoria_id}
+                                  onChange={cat => setAumentoForm({...aumentoForm, categoria_id: cat.id})}
+                                  placeholder="Buscar categoría..."
+                                  required
+                              />
+                          </div>
+                          <div className="mb-3">
+                              <label className="form-label fw-bold">Porcentaje de aumento</label>
+                              <div className="input-group">
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="-99.99"
+                                    className="form-control"
+                                    placeholder="Ej: 10"
+                                    value={aumentoForm.porcentaje}
+                                    onChange={e => setAumentoForm({...aumentoForm, porcentaje: e.target.value})}
+                                    required
+                                  />
+                                  <span className="input-group-text">%</span>
+                              </div>
+                              <div className="form-text">Se aplica al precio unitario y al mayorista, redondeado a pesos enteros. Para bajar precios usá un número negativo.</div>
+                          </div>
+
+                          {aumentoForm.categoria_id && (
+                              <div className="mb-4">
+                                  <h6 className="fw-bold mb-2">Vista previa ({productosCategoriaAumento.length} productos)</h6>
+                                  {productosCategoriaAumento.length > 0 ? (
+                                      <div className="table-responsive" style={{maxHeight: '220px'}}>
+                                          <table className="table table-sm table-bordered align-middle mb-0">
+                                              <thead className="table-light">
+                                                  <tr>
+                                                      <th>Producto</th>
+                                                      <th className="text-end">Unitario</th>
+                                                      <th className="text-end">Mayorista</th>
+                                                  </tr>
+                                              </thead>
+                                              <tbody>
+                                                  {productosCategoriaAumento.map(p => {
+                                                      const factor = 1 + (Number(aumentoForm.porcentaje) || 0) / 100;
+                                                      return (
+                                                          <tr key={p.id}>
+                                                              <td className="small">{p.nombre}</td>
+                                                              <td className="text-end small">
+                                                                  ${formatearMoneda(p.precio_unitario)} → <b>${formatearMoneda(Math.round(p.precio_unitario * factor))}</b>
+                                                              </td>
+                                                              <td className="text-end small">
+                                                                  ${formatearMoneda(p.precio_mayorista)} → <b>${formatearMoneda(Math.round(p.precio_mayorista * factor))}</b>
+                                                              </td>
+                                                          </tr>
+                                                      );
+                                                  })}
+                                              </tbody>
+                                          </table>
+                                      </div>
+                                  ) : (
+                                      <div className="text-secondary small">No hay productos en esta categoría.</div>
+                                  )}
+                              </div>
+                          )}
+
+                          <div className="d-flex justify-content-end gap-2">
+                              <button type="button" className="btn btn-link text-white bg-secondary text-decoration-none" data-bs-dismiss="modal">Cancelar</button>
+                              <button type="submit" className="boton-formulario btn bg-danger text-white px-4 rounded-3" disabled={productosCategoriaAumento.length === 0}>Aplicar aumento</button>
+                          </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
             {/* <-- Modal Descargar Remito --> */}
             <div className="modal fade" id="modalDescargarRemito" tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -665,12 +779,13 @@ const AbmProductos = () => {
                                     </div>
                                     <div className="col-md-4">
                                         <label className="form-label small fw-bold mb-1">Producto</label>
-                                        <select className="form-select form-select-sm" value={itemActual.producto_id} onChange={handleProductoRemitoChange}>
-                                            <option value="">Seleccionar...</option>
-                                            {productos.map(p => (
-                                                <option key={p.id} value={p.id}>{p.nombre}</option>
-                                            ))}
-                                        </select>
+                                        <SelectorBuscable
+                                            opciones={productos}
+                                            value={itemActual.producto_id}
+                                            onChange={handleSeleccionarProductoRemito}
+                                            placeholder="Buscar producto..."
+                                            small
+                                        />
                                     </div>
                                     <div className="col-md-2">
                                         <label className="form-label small fw-bold mb-1">Precio Unit.</label>
