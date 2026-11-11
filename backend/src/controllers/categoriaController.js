@@ -1,8 +1,7 @@
 class CategoriaController {
   
-    constructor(pool, tokenController) {
+    constructor(pool) {
       this.pool = pool;
-      this.tokenController = tokenController;
     }
   
     obtenerCategorias = async (req, res) => {

@@ -1,8 +1,7 @@
 class ProductoController {
   
-  constructor(pool, tokenController) {
+  constructor(pool) {
     this.pool = pool;
-    this.tokenController = tokenController;
   }
 
   obtenerProductoPorId = async (req, res) => {
@@ -112,6 +111,34 @@ class ProductoController {
     } catch (error) {
       console.error('Error al editar el producto:', error);
       res.status(500).json({ error: 'Error del servidor al editar el producto' });
+    }
+  };
+
+  aumentarPreciosPorCategoria = async (req, res) => {
+    try {
+      const { categoriaId } = req.params;
+      const porcentaje = Number(req.body.porcentaje);
+
+      if (isNaN(porcentaje) || porcentaje <= -100) {
+        return res.status(400).json({ error: 'El porcentaje ingresado no es válido' });
+      }
+
+      const consulta = await this.pool.query(
+        `UPDATE productos
+         SET precio_unitario = ROUND(precio_unitario * (1 + $1::numeric / 100)),
+             precio_mayorista = ROUND(precio_mayorista * (1 + $1::numeric / 100))
+         WHERE categoria_id = $2 RETURNING *`,
+        [porcentaje, categoriaId]
+      );
+
+      if (consulta.rows.length === 0) {
+        return res.status(404).json({ error: 'No hay productos en esa categoría' });
+      }
+
+      res.json({ mensaje: `Se actualizaron ${consulta.rows.length} productos`, productos: consulta.rows });
+    } catch (error) {
+      console.error('Error al aumentar los precios:', error);
+      res.status(500).json({ error: 'Error del servidor al aumentar los precios' });
     }
   };
 
